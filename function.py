@@ -1,6 +1,7 @@
 #importing packages
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 
 # definition of parameters
@@ -75,21 +76,57 @@ def solve_ode( f ,x , t_0 , t_end , n , deltat_max , Method):
         h=t[i+1]-t[i]
         x_list[i+1]=solve_to(f, x_list[i], t[i], h, deltat_max, Method)
 
-    return x_list
+    return x_list ,t
+def find_error_dxdt( x_list ,t ):
+    n=len(x_list)
+    abs_error= np.zeros(n)
+    for i in range(n):
+        abs_error[i] = abs(x_list[i]-np.exp(t[i]))
 
 
+    return abs_error
+
+def find_error_dxdt_result( x ,t ):
+    abs_error = abs(x-np.exp(t))
 
 
+    return abs_error
+
+def error_depend_deltat_t( f ,x , t_0 , t_end , n ,h, Method):
+    list_error = np.zeros(len(h))
+    for i in range(len(h)):
+         x_list,t =solve_ode(f, x, t_0, t_end, n, h[i], Method)
+         abs_error=find_error_dxdt_result(x_list[-1], t_end)
+         list_error[i]=abs_error
+           #print(abs_error)
+
+    return list_error
 
 
-
-
+#def test( f ,x , t_0 , t_end , n , deltat_max , Method):
+   # n= math.ceil((t_end-t_0)/deltat_max)
+   # x_list = np.zeros(n)
+  # x_list[0]=x
+  #  t=t_0
+   # for i in range(n-1):
+  #      x_list[i+1] = euler_step(f, x, t, deltat_max)
+   # return x_list ,t
 def dxdt(x,t):
     dxdt= x
     return dxdt
 
 #print(solve_to(dxdt,1 ,0 ,1, 0.001 , 'rk4' ))
-x=solve_ode(dxdt,1 ,0 ,1 ,100, 0.0001 , 'euler')
+#x,t=solve_ode(dxdt,1 ,0 ,1 ,100, 0.0001 , 'euler')
+#error ,h=find_error_dxdt(x,t)
+#print(x)
+list_h=np.logspace(-1 , -6 , 1000 )
+list_error = error_depend_deltat_t(dxdt,1 ,0 ,1 ,5,list_h ,  'euler')
+print(list_error)
 #[x1,t1]=euler_step( dxdt ,1 , 0.5 , 0.1 )
 #print(RK4_step( dxdt ,1 , 0.5 , 0.1 ))
-print(x)
+plt.loglog(list_h,list_error,label="Euler's Method")
+plt.xlabel('h')
+plt.ylabel('Absolute Error')
+plt.show()
+print(len(list_error))
+print(len(list_h))
