@@ -35,7 +35,7 @@ def get_most_repeated_value_index(input,dp=5):
     #print(counts)
     output = unique[np.where(counts == np.max(counts))]
     #print(output)
-    index=np.where(input == output)
+    index=np.where(1122222222222222222222222222222200000000000000000000000000000 == output)
     #print(index)
     return output,np.array(index)
 
@@ -62,6 +62,8 @@ def shooting(ode, u0,*args , method='fsolve' ,plot=False):
     returned array is empty.
     """
     # Here is the code that does the shooting
+
+
     g = lambda u0, *args: np.array([
         *(u0[:-1] - solve_ode(ode, u0[:-1],  u0[-1],  'rk4', *args)[0][-1]),
         ode(u0[:-1], 1, *args)[0] ,  # dx/dt(0) = 0
@@ -75,11 +77,20 @@ def shooting(ode, u0,*args , method='fsolve' ,plot=False):
         else:
             print('not valid input for method')
             root = np.array([])
-    except RuntimeWarning:
-        root = np.array([])
-
-
-
+        if plot == True:
+            print(root[:-1])
+            print(root[-1])
+            solution, t = solve_ode(ode, root[:-1], root[-1], 'rk4', *args ,n=1000)
+            print(solution)
+            plt.plot(root[0], root[1], 'go', label="Manually found orbit" )
+            plt.plot(solution[:, 0], solution[:, 1])
+            plt.ylabel('y')
+            plt.xlabel('x')
+            plt.legend()
+            plt.show()
+    except ValueError:
+            print('test')
+            root = np.array([])
 
     return root
 
@@ -118,10 +129,14 @@ def main():
     a = 1
     d = 0.1
     parameter = (a, 0.15, d)
-    initial_guess = initial_guesss(predator_prey , [1,1] ,100, *parameter)
+    #shooting(hopf_bifurcation_normal, [0.01, 0.01, 3, 4], *(2, -1))
+    solution, t = solve_ode(hopf_bifurcation_normal, [1, 1], 100, 'rk4', 2,-1, n=1000, plot='plot_x_y')
+    initial_guess = initial_guesss(hopf_bifurcation_normal1 , [1.4, 0] ,1500,  2      )
     # initial_guess =np.append(result1,25.05)
-    # print(initial_guess.tolist())
-    print(shooting(predator_prey, [1,1,100], *parameter ,method = 'fsolve', plot=True))
+    print(initial_guess)
+    print(initial_guess)
+    print(shooting(hopf_bifurcation_normal, initial_guess, *( 0.02020202 ,-1.  ) ,method = 'fsolve', plot=True))
+    print(shooting(predator_prey, [0.7,0.3,100], *parameter ,method = 'fsolve', plot=True))
 
 
 if __name__ == "__main__":

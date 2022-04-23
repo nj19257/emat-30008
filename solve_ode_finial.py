@@ -34,8 +34,9 @@ def RK4_step(f, x, t, h,*args): #work
             args : Any extra arguments .
 
     :return:
-    [ x_{n+1} , t_{n+1} ] or [x_new , t_new] , which it the x and t for the next step
+    [ x_{n+1} , t_{n+1} ] or [x_new , t_new] , which x_new and t_new are the value of x and t for the next timestep
     """
+
     k1 = f(x, t,*args)
     k2 = f(x + h * (k1/2) , t + h / 2, *args)
     k3 = f(x + h * (k2/2), t + h / 2, *args)
@@ -54,10 +55,10 @@ def solve_to( f ,x , t , t1 , deltat_max , Method,*args): # work
             t1 : the value of next timestep based on the current timestep
             deltat_max : The maximum timestep allowed
             Method : Which method to solve the ODE
+            args : Any extra arguments .
     :return:
     x : the x value for the target timestep
     """
-
     Method=str.lower(Method) #to ignore error cause by upper_case input
     #Determine which method to be used
     if Method == 'euler':
@@ -80,16 +81,15 @@ def solve_ode( f , x ,  t_end ,  Method  , *args, deltat_max =1e-3 ,n=5 ,t_0=0 ,
             x_current : the current value of x
             t_0 : the initial timestep (default start time is 0 )
             t_end : the target timestep
-            deltat_max : The maximum timestep allowed
             Method : Which method to use
+            deltat_max : The maximum timestep allowed (default value is 1e-3 )
             n : number of step to reach the target timestep(the default timesteps is 5)
-
+            args : Any extra arguments .
 
     :return:
     x_list : the values of x corresponding to t(time)
     t : the time of x in x_list
     """
-
     if timer == True:
         start = time.time()
     t = np.linspace(t_0, t_end, n )
@@ -113,31 +113,33 @@ def solve_ode( f , x ,  t_end ,  Method  , *args, deltat_max =1e-3 ,n=5 ,t_0=0 ,
     # plot figure of y against t
     elif plot == 'plot_y_t':
         plot_y_t(x_list[:,1],t, Method, 'y')
-
+    elif plot == False:
+        # No changes are made
+        pass
+    else:
+        print('The input string for plot parameter is incorrect')
     return x_list ,t
 
 
 
 
 
-def error_depend_deltat_t( f ,x  , t_end ,h, Method , *args ,**kwargs):
+def error_depend_deltat_t( f ,x  , t_end ,h, Method , *args , plot=False , timer=False):
     """
     Function that find out the error depending on a range of delta t
         Parameter:
             f(function) = function used ( need to define more detail)
             x_current : the current value of x
-            t_0 : the initial timestep (default start time is 0 )
             t_end : the target timestep
-            deltat_max : The maximum timestep allowed
-            Method : Which method to use
+            h : The list of values for maximum timesteps allowed for testing
+            Method : Which method to use (Forward Euler or RK4 Method)
             n : number of step to reach the target timestep(the default timesteps is 5)
 
 
     :return:
-    x_list : the values of x corresponding to t(time)
-    t : the time of x in x_list
+    list_error =
     """
-    if kwargs['timer'] == True:
+    if timer == True:
         start = time.time()
 
     list_error = np.zeros(len(h))
@@ -148,11 +150,11 @@ def error_depend_deltat_t( f ,x  , t_end ,h, Method , *args ,**kwargs):
 
         list_error[i]=abs_error
         #print(x_list[-1])
-    if kwargs['timer'] == True:
+    if timer == True:
         end = time.time()
         print("Time taken for %s = %f sec" % (Method, end - start))
     #Therefore , the plot function wont take into account of the method
-    if kwargs['plot'] == True:
+    if plot == True:
         plot_loglog(h,list_error,Method)
     return list_error
 
@@ -183,8 +185,8 @@ def plot_x_y( x_list ,Method):
 def plot_x_t( x_list ,t,Method ,xlabel):
 
     plt.plot(t, x_list, label=Method)
-    plt.xlabel(xlabel)
-    plt.ylabel('t')
+    plt.xlabel('t')
+    plt.ylabel(xlabel)
     plt.show()
 
 def same_error(list_error_1,list_error_2 , h , tol=1e-5):

@@ -24,10 +24,20 @@ def d2xdt2_equals_minus_x_true(t):
     return np.array([x, y])
 
 def hopf_bifurcation_normal(u,t,*args):
+    #print(u)
+    #print(t)
     beta = args[0]
     sigma = args[1]
     du1dt = beta*u[0] - u[1] + sigma*u[0]*(u[0]**2+u[1]**2)
     du2dt = u[0] + beta*u[1] + sigma*u[1]*(u[0]**2+u[1]**2)
+    return np.array([du1dt , du2dt])
+
+def hopf_bifurcation_normal1(u,t,*args):
+    #print(u)
+    #print(t)
+    beta = args[0]
+    du1dt = beta*u[0] - u[1] - u[0]*(u[0]**2+u[1]**2)
+    du2dt = u[0] + beta*u[1] - u[1]*(u[0]**2+u[1]**2)
     return np.array([du1dt , du2dt])
 
 #when sigma is -1
@@ -54,3 +64,8 @@ def predator_prey(r ,t,*args):
     dxdt=r[0]*(1-r[0])- (a*r[0]*r[1])/(d+r[0])
     dydt=b*r[1]*(1-r[1]/r[0])
     return np.array([dxdt, dydt])
+
+def modified_hopf_bifurcation_normal(u,t,beta):
+    du1dt = beta*u[0] - u[1] + u[0]*(u[0]**2+u[1]**2) - u[0]*(u[0]**2+u[1]**2)**2
+    du2dt = u[0] + beta*u[1] + u[1]*(u[0]**2+u[1]**2) - u[1]*(u[0]**2+u[1]**2)**2
+    return np.array([du1dt , du2dt])

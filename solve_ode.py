@@ -3,7 +3,8 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import time
-def euler_step(f, x, t, h): #work
+
+def euler_step(f, x, t, h,*args): #work
     """
      single Euler step function
         Parameter:
@@ -16,11 +17,11 @@ def euler_step(f, x, t, h): #work
     :return:
     [ x_{n+1} , t_{n+1} ] or [x_new , t_new] , which it the x and t for the next step
     """
-    x_new = x + h * f(x, t)
+    x_new = x + h * f(x, t,*args)
     t_new = t + h
     return [x_new, t_new]
 
-def RK4_step(f, x, t, h): #work
+def RK4_step(f, x, t, h,*args): #work
     """
      single 4th-order Runge-Kutta step function
         Parameter:
@@ -33,15 +34,15 @@ def RK4_step(f, x, t, h): #work
     :return:
     [ x_{n+1} , t_{n+1} ] or [x_new , t_new] , which it the x and t for the next step
     """
-    k1 = f(x, t)
-    k2 = f(x + h * k1 / 2, t + h / 2)
-    k3 = f(x + h * k2 / 2, t + h / 2)
-    k4 = f(x + h * k3, t + h)
+    k1 = f(x, t,*args)
+    k2 = f(x + h * (k1/2) , t + h / 2, *args)
+    k3 = f(x + h * (k2/2), t + h / 2, *args)
+    k4 = f(x + h * k3, t + h, *args)
     x_new = x + (1 / 6) * h * (k1 + 2 * k2 + 2 * k3 + k4)
     t_new = t + h
     return [x_new, t_new]
 
-def solve_to( f ,x , t , t1 , deltat_max , Method): # work
+def solve_to( f ,x , t , t1 , deltat_max , Method,*args): # work
     """
      Function which solves from x_n , t_n to x_{n+1} , t_{n+1} in steps no bigger than deltat_max
         Parameter:
@@ -53,6 +54,7 @@ def solve_to( f ,x , t , t1 , deltat_max , Method): # work
             Method : Which method to solve the ODE
     :return:
     """
+
     Method=str.lower(Method) #to ignore error cause by upper_case input
     #Determine which method to be used
     if Method == 'euler':
@@ -61,12 +63,12 @@ def solve_to( f ,x , t , t1 , deltat_max , Method): # work
         method = RK4_step
 
     while (t + deltat_max) < t1:  # steps while t value is < t2
-        x, t = method(f, x, t, deltat_max)
+        x, t = method(f, x, t, deltat_max, *args)
     else:
-        x, t = method(f, x, t, t1 - t)  # bridges gap between last step and t2 using step size t2-t_prev_step
+        x, t = method(f, x, t, t1 - t, *args)  # bridges gap between last step and t2 using step size t2-t_prev_step
     return x
 
-def solve_ode( f , x , t_0 , t_end , deltat_max , Method ,n=5 ,plot=False):
+def solve_ode( f , x , t_0 , t_end , deltat_max , Method  , *args,n=5, plot=False , timer=False):
     """
     single Euler step function
         Parameter:
@@ -78,26 +80,41 @@ def solve_ode( f , x , t_0 , t_end , deltat_max , Method ,n=5 ,plot=False):
 
     :return:
     """
-    t = np.linspace(t_0, t_end, n)
+
+    if timer == True:
+        start = time.time()
+    t = np.linspace(t_0, t_end, n )
     t_n = len(t)
     x_n = np.size(x)
     x_list = np.zeros((t_n,x_n))
     x_list[0]= x
 
     for i in range(t_n-1):
-        x_list[i+1]=solve_to(f, x_list[i], t[i], t[i+1], deltat_max, Method)
+        x_list[i+1]=solve_to(f, x_list[i], t[i], t[i+1], deltat_max, Method,*args)
+
+    if timer == True:
+        end = time.time()
+        print("Time taken for %s = %f sec" % (Method, end - start))
+    if plot == 'plot_x_y':
+        plot_x_y(x_list, Method)
+    elif plot == 'plot_x_t':
+        plot_x_t(x_list[:,0],t, Method, 'x')
+    elif plot == 'plot_y_t':
+        plot_y_t(x_list[:,1],t, Method, 'y')
 
     return x_list ,t
 
 
 
-def error_depend_deltat_t( f ,x , t_0 , t_end ,h, Method , **kwargs): # plot=False , timer = False):
+
+
+def error_depend_deltat_t( f ,x , t_0 , t_end ,h, Method , *args ,**kwargs): # plot=False , timer = False):
     if kwargs['timer'] == True:
         start = time.time()
 
     list_error = np.zeros(len(h))
     for i in range(len(h)):
-        x_list ,t =solve_ode(f, x, t_0 , t_end , h[i], Method)
+        x_list ,t =solve_ode(f, x, t_0 , t_end , h[i], Method,*args)
         if f == dxdt_equal_x:
             abs_error=find_error_dxdt_result(x_list[-1], t_end)
 
@@ -127,17 +144,19 @@ def plot_loglog(list_h,list_error , Method):
     plt.legend()
     plt.xlabel('h')
     plt.ylabel('Absolute Error')
-"""
-def plot_xlabel_ylabel(xlabel, ylabel, x_axis , y_axis ,Method):
-    n = np.ndim(euler_output[0]) #number of x_axis to plot against y_axis
-    for i in range(1,n):
-        plt.subplot(2, 1, 1)
-        plt.plot(t, ex2_euler_sol_x, label='Euler')
-        plt.plot(t, ex2_rk4_sol_x, label='RK4')
 
-    plt.plot(x, y, label=Method)
+def plot_x_y( x_list ,Method):
+
+    plt.plot(x_list[:,0], x_list[:,1], label=Method)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.show()
+
+def plot_x_t( x_list ,t,Method ,xlabel):
+    plt.plot(t, x_list, label=Method)
     plt.xlabel(xlabel)
-    plt.ylabel(ylabel)"""
+    plt.ylabel('t')
+    plt.show()
 
 def same_error(list_error_1,list_error_2 , h , tol=1e-5):
     error=abs(list_error_1-list_error_2)
@@ -184,36 +203,42 @@ def d2xdt2_equals_minus_x_true(t):
 """
 This section is used to answer Q3
 """
-n = 500
-euler_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1] ,0 ,100 , 0.001,  'euler' , n=n , plot=True)
-rk4_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1] ,0 ,100 , 0.001,  'rk4' , n=n , plot=True)
-true_answer=d2xdt2_equals_minus_x_true(t)
-#plot_xlabel_ylabel('t', x, x , y ,Method)
-plt.subplot(2, 1, 1)
-plt.plot(t, true_answer[0], alpha=0.15 , lw=5, label='True')
-plt.plot(t, euler_output[:,0],'--', label='Euler')
-plt.plot(t, rk4_output[:,0],':', label='RK4')
+def main():
+    #list_h=np.logspace(-1 , -6 , 100 ) #Therefore, h will be always smaller than the default timestep
+    #list_error_rk4 = error_depend_deltat_t(dxdt_equal_x, 1, 0, 1, list_h, 'rk4', plot=True, timer=True)
+    n = 500
+    euler_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1] ,0 ,100 , 0.001,  'euler' , n=n , timer=True)
+    rk4_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1] ,0 ,100 , 0.001,  'rk4' , n=n  ,timer=True )
+    true_answer=d2xdt2_equals_minus_x_true(t)
+    #plot_xlabel_ylabel('t', x, x , y ,Method)
+    plt.subplot(2, 1, 1)
+    plt.plot(t, true_answer[0], alpha=0.15 , lw=5, label='True')
+    plt.plot(t, euler_output[:,0],'--', label='Euler')
+    plt.plot(t, rk4_output[:,0],':', label='RK4')
 
-plt.legend()
-plt.xlabel('t')
-plt.ylabel('x')
+    plt.legend()
+    plt.xlabel('t')
+    plt.ylabel('x')
 
-plt.subplot(2, 1, 2)
-plt.plot(t, true_answer[1], alpha=0.15 , lw=5, label='True')
-plt.plot(t, euler_output[:,1],'--', label='Euler')
-plt.plot(t, rk4_output[:,1],':', label='RK4')
+    plt.subplot(2, 1, 2)
+    plt.plot(t, true_answer[1], alpha=0.15 , lw=5, label='True')
+    plt.plot(t, euler_output[:,1],'--', label='Euler')
+    plt.plot(t, rk4_output[:,1],':', label='RK4')
 
 
-plt.legend()
-plt.xlabel('t')
-plt.ylabel('y (dx/dt)')
+    plt.legend()
+    plt.xlabel('t')
+    plt.ylabel('y (dx/dt)')
 
-plt.show()
+    plt.show()
 
-plt.plot(true_answer[1], true_answer[0], alpha=0.15 , lw=5, label='True')
-plt.plot(euler_output[:,1], euler_output[:,0],'--', label='Euler')
-plt.plot(rk4_output[:,1], rk4_output[:,0],':', label='RK4')
-plt.legend()
-plt.xlabel('y (dx/dt)')
-plt.ylabel('x')
-plt.show()
+    plt.plot(true_answer[1], true_answer[0], alpha=0.15 , lw=5, label='True')
+    plt.plot(euler_output[:,1], euler_output[:,0],'--', label='Euler')
+    plt.plot(rk4_output[:,1], rk4_output[:,0],':', label='RK4')
+    plt.legend()
+    plt.xlabel('y (dx/dt)')
+    plt.ylabel('x')
+    plt.show()
+
+if __name__ == "__main__":
+    main()

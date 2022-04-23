@@ -16,6 +16,7 @@ def predator_prey(r , t , *args):
 
     :return: [dxdt, dydt ]  which represent the instantaneous growth rates of the two populations;
     """
+    #print(args)
     a = args[0]
     b = args[1]
     d = args[2]
@@ -42,16 +43,17 @@ def solve(u0, *args):
 
 def single_preiodic_orbit(t):
     output, i=get_most_repeated_value_index(np.diff(t))
+    print(output)
     return  output
 
-def get_most_repeated_value_index(input,dp=3):
+def get_most_repeated_value_index(input,dp=5):
     input = np.around(input, dp)
-    unique, counts = np.unique(input, return_counts=True)
-    print(counts)
+    unique, counts = np.unique(input, return_counts=True )
+    #print(counts)
     output = unique[np.where(counts == np.max(counts))]
-    print(output)
+    #print(output)
     index=np.where(input == output)
-    print(index)
+    #print(index)
     return output,np.array(index)
 
 def solve_dxdt(x,ignore_first=True):
@@ -89,8 +91,22 @@ def get_phase_condition(f,initial_x,target_time ,row,tol,*args , n=200):
 
     return phase_condition1, phase_condition2
 
+def get_test_most_repeated_value(f ,x0 , target_time ):
+    solution, t = solve_ode(predator_prey, [1, 1], 0, 500, 0.001, 'rk4', a, b, d, n=500)
 
+def initial_guesss(f, x0 , target_time ):
+    n = target_time*10
+    solution, t = solve_ode(predator_prey, x0, 0, target_time, 0.001, 'rk4', 1, 0.15, 0.1, n=n)
+    #get most repeated x values
+    output, i = get_most_repeated_value_index(solution[:,0])
+    print(output)
+    print(i)
+    #get time interval between most repeated x values
+    cycle_time = single_preiodic_orbit(t[i])
+    values_guess = np.append( solution[np.random.choice(i[0])] , cycle_time)
+    return values_guess
 
+"""
 
 u0=[1,1]
 saddle_point = solve(u0,1,0.15,0.1)
@@ -101,15 +117,23 @@ d=0.1
 b=0.15
 #plot figure of x againist y with b= 0.15
 solution1,t1 = solve_ode( predator_prey,[1,1] , 0 , 500 , 0.001 , 'rk4'  ,a, b, d, n=500 , plot='plot_x_y')
+def unique_rows(data):
+    uniq = np.unique(data.view(data.dtype.descr * data.shape[1]))
+    return uniq.view(data.dtype).reshape(-1, data.shape[1])
+#plot figure of x againist y with b= 0.45"""
+initial_guesss(predator_prey,[1,1],500)
 
-#plot figure of x againist y with b= 0.45
-b=0.45
-solution,t = solve_ode( predator_prey,[1,1] , 0 , 100 , 0.001 , 'rk4'  ,a, b, d, n=100 , plot='plot_x_y')
+"""
+
+a=1
+d=0.1
+b=0.15
+#plot figure of x againist y with b= 0.15
+solution1,t1 = solve_ode( predator_prey,[1,1] , 0 , 500 , 0.001 , 'rk4'  ,a, b, d, n=500 , plot='plot_x_y')
 o,i=get_most_repeated_value_index(solution1[:,0])
-
-"""
+#print(solution1)
 #need to rewrite this part in word
-"""
+print('y')
 print(o)
 print(np.diff(t1[i]))
 print(single_preiodic_orbit(t1[i]))
@@ -118,7 +142,8 @@ plt.plot(solution1[:,0], solution1[:,1])
 plt.ylabel('y')
 plt.xlabel('x')
 plt.legend()
-plt.show()
+plt.show()"""
+"""
 #start Q2 get phase_condition
 i=solve_dxdt(solution1[:,0])
 
@@ -129,3 +154,50 @@ print(x)
 result1,result2 = get_phase_condition(predator_prey, [1,1] , 1000 , 0, 1e-10, 1, 0.15,0.1, n=5000)
 print(result1)
 print(result2)
+print(solve_ode( predator_prey,[0.06864949 ,0.15707303] , 0 , 25.0501002 , 0.001 , 'rk4'  ,a, 0.15, d, n=100 , plot='plot_x_y')) """
+
+def shooting(f,U,*args):
+    g = lambda U, *args: [
+        *(U[:-1] - solve_ode(f, U[:-1], 0, U[-1], 0.001, 'rk4', *args)[0][-1]),
+        f(U[:-1], 1, *args)[0],  # dx/dt(0) = 0
+    ]
+    fsolve_roots = fsolve(g, initial_guess, parameter)
+    print(fsolve_roots)
+
+a=1
+d=0.1
+b=0.15
+parameter=(a,b,d)
+initial_guess = [0.06861238 , 0.15582958,25.05]
+#print(solve_ode( predator_prey,[1,1] , 0 , 100 , 0.001 , 'rk4'  ,a, b, d, n=100 , plot='plot_x_y')[0][-1])
+g = lambda U,*args : [
+    *(U[:-1] - solve_ode(predator_prey,U[:-1], 0 , U[-1] , 0.001 , 'rk4' ,*args )[0][-1]),
+    predator_prey(U[:-1],1,*args)[0] ,# dx/dt(0) = 0
+]
+
+G = lambda U : [
+    *(U[:-1] - solve_ode(predator_prey_test,U[:-1], 0 , U[-1] , 0.001 , 'rk4'  )[0][-1]),
+    U[0]*(1-U[0])- (1*U[0]*U[1])/(0.1+U[0]) ,# dx/dt(0) = 0
+]
+
+
+def predator_prey_test(r , t ):
+    """
+    The predator-prey equation function
+        Parameter:
+            x = x is the number of prey (for example, rabbits).
+            y : y is the number of some predator (for example, foxes).
+            a ,b, d : are positive real parameters describing the interaction of the two species.
+
+    :return: [dxdt, dydt ]  which represent the instantaneous growth rates of the two populations;
+    """
+    #print(args)
+    a = 1
+    d = 0.1
+    b = 0.15
+    dxdt=r[0]*(1-r[0])- (a*r[0]*r[1])/(d+r[0])
+    dydt=b*r[1]*(1-r[1]/r[0])
+    return np.array([dxdt, dydt])
+
+
+
