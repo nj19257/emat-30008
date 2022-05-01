@@ -1,104 +1,143 @@
 import numpy as np
 from scipy import optimize
-from solve_ode import solve_ode
+from solve_ode_finial import solve_ode
 from scipy.optimize import fsolve
+from arbitary_differential_equation import *
+from root_finding import newton
 import matplotlib.pyplot as plt
-import math
-from new_numerial_shooting import get_most_repeated_value_index
+import sys
+import warnings
+
+def single_preiodic_orbit(t):
+    output, i=get_most_repeated_value_index(np.diff(t))
+    print(output)
+    return  output
+
+def initial_guesss(f, x0 , target_time ,*args):
+    n = target_time*20
+    solution, t = solve_ode(f, x0, target_time, 'rk4', *args , n=n)
+    try:
+        #get most repeated x values
+        output, i = get_most_repeated_value_index(solution[:,0])
+        #get time interval between most repeated x values
+        cycle_time = np.random.choice(single_preiodic_orbit(t[i]))
+    except ValueError:
+        print('The values of input is not enough to find a good initial guess , try to input a larger target time')
+        sys.exit([])
+    values_guess = np.append( solution[np.random.choice(i[0])] , cycle_time)
+    print(solution[np.random.choice(i[0])])
+    print(values_guess)
+    return values_guess
+
+def get_most_repeated_value_index(input,dp=5):
+    input = np.around(input, dp)
+    unique, counts = np.unique(input, return_counts=True )
+    #print(counts)
+    output = unique[np.where(counts == np.max(counts))]
+    #print(output)
+    index=np.where(1122222222222222222222222222222200000000000000000000000000000 == output)
+    #print(index)
+    return output,np.array(index)
 
 
-
-def predator_prey(r ,t,*args):
+def shooting(ode, u0,*args , method='fsolve' ,plot=False):
     """
-    The predator-prey equation function
-        Parameter:
-            x = x is the number of prey (for example, rabbits).
-            y : y is the number of some predator (for example, foxes).
-            a ,b, d : are positive real parameters describing the interaction of the two species.
+    A function that uses numerical shooting to find limit cycles of
+    a specified ODE.
 
-    :return: [dxdt, dydt ]  which represent the instantaneous growth rates of the two populations;
+    Parameters
+    ----------
+    ode : function
+        The ODE to apply shooting to. The ode function should take
+        a single parameter (the state vector) and return the
+        right-hand side of the ODE as a numpy.array.
+    u0 : numpy.array
+        An initial guess at the initial values for the limit cycle.
+    args : Any extra arguments .
+
+    Returns
+    -------
+    Returns a numpy.array containing the corrected initial values
+    for the limit cycle. If the numerical root finder failed, the
+    returned array is empty.
     """
+    # Here is the code that does the shooting
+
+
+    g = lambda u0, *args: np.array([
+        *(u0[:-1] - solve_ode(ode, u0[:-1],  u0[-1],  'rk4', *args)[0][-1]),
+        ode(u0[:-1], 1, *args)[0] ,  # dx/dt(0) = 0
+    ])
+    warnings.simplefilter("error")
+    try :
+        if method == 'fsolve':
+            root = fsolve(g, u0, args)
+        elif method == 'newton':
+            root = newton(g,u0,*args)
+        else:
+            print('not valid input for method')
+            root = np.array([])
+        if plot == True:
+            print(root[:-1])
+            print(root[-1])
+            solution, t = solve_ode(ode, root[:-1], root[-1], 'rk4', *args ,n=1000)
+            print(solution)
+            plt.plot(root[0], root[1], 'go', label="Manually found orbit" )
+            plt.plot(solution[:, 0], solution[:, 1])
+            plt.ylabel('y')
+            plt.xlabel('x')
+            plt.legend()
+            plt.show()
+    except ValueError:
+            print('test')
+            root = np.array([])
+
+    return root
+
+
+
+def predator_prey(r, t, *args):
+    """
+        The predator-prey equation function
+            Parameter:
+                x = x is the number of prey (for example, rabbits).
+                y : y is the number of some predator (for example, foxes).
+                a ,b, d : are positive real parameters describing the interaction of the two species.
+
+        :return: [dxdt, dydt ]  which represent the instantaneous growth rates of the two populations;
+        """
     a = args[0]
     b = args[1]
     d = args[2]
-    dxdt=r[0]*(1-r[0])- (a*r[0]*r[1])/(d+r[0])
-    dydt=b*r[1]*(1-r[1]/r[0])
+
+    dxdt = r[0] * (1 - r[0]) - (a * r[0] * r[1]) / (d + r[0])
+    dydt = b * r[1] * (1 - r[1] / r[0])
     return np.array([dxdt, dydt])
 
-def get_x_y_with_dxdt_equal_zero(a,b,d):
-    dxdt=x*(1-x)- (a*x*y)/(d+x)
 
-#Assume b = 0.5 as 0.5 > 0.26
-# predator_prey(0.4 ,y ,1 , 0.5,0.1 )
+def main():
+    # plot x_y diagram when a=1 , d = 0.1 and b=0.45 (Thus, b >0.26)
+    a = 1
+    d = 0.1
+    b = 0.15
+    #plot figure of x againist y with b= 0.15
+    #solution1, t1 = solve_ode(predator_prey, [1, 1], 500, 'rk4', a, b, d, n=500, plot='plot_x_y')
 
-def f(x ,y ,a ,b ,d ):
-    #dxdt=r[0]*(1-r[0])- (1*r[0]*r[1])/(0.1+r[0])
-    dxdt = x * (1 - x) - (a * x * y) / (d + x)
-    #dydt = b * y(1 - y / x)
-    return dxdt
-def f_der(x ,y ,a ,b ,d ):
-    dydt = b * y*(1 - y / x)
-    return dydt
-
-
-def solve(u0, p):
-    # solve the combined problem
-    u, info, ier, msg = fsolve(predator_prey , u0, args=(p,), full_output=True)
-    if ier == 1:
-        print("Root finder found the solution u={} after {} function calls; the norm of the final residual is {}".format(u, info["nfev"], np.linalg.norm(info["fvec"])))
-        return u
-    else:
-        print("Root finder failed with error message: {}".format(msg))
-        return None
-def solve_dxdt(x):
-    change=x[:-1]-x[1:]
-    asign = np.sign(change)
-    signchange = ((np.roll(asign, 1) - asign) != 0).astype(int)
-    signchange[0]=0
-    index_change= np.where(signchange==1)
-    return np.array(index_change)
-
-def get_dxdt_0(x,index_change):
-    #dxdt_0=
-    n=np.array(index_change)
-    print(x[n])
-    print(x[n+1])
-
-def get_phase_condition(f,initial_x,target_time ,row,tol,*args , n=200):
-    print(args)
-    x ,t= solve_ode( f, initial_x , 0 , target_time , 0.001 , 'rk4'  ,*args, n=n ,plot= 'plot_x_y')
-    print(x)
-    index = solve_dxdt(x[:, row])
-    x=x[index,row]
-    print(x)
-    i=np.size(x)
-    print(i)
-    for k in range(i):
-        diff[k]=x[k+2]-x[k]
-        print(diff)
+    # plot figure of x againist y with b= 0.45
+    b = 0.45
+    #solution, t = solve_ode(predator_prey, [1, 1], 100, 'rk4', a, b, d, n=100, plot='plot_x_y')
+    a = 1
+    d = 0.1
+    parameter = (a, 0.15, d)
+    #shooting(hopf_bifurcation_normal, [0.01, 0.01, 3, 4], *(2, -1))
+    solution, t = solve_ode(hopf_bifurcation_normal, [1, 1], 100, 'rk4', 2,-1, n=1000, plot='plot_x_y')
+    initial_guess = initial_guesss(hopf_bifurcation_normal1 , [1.4, 0] ,1500,  2      )
+    # initial_guess =np.append(result1,25.05)
+    print(initial_guess)
+    print(initial_guess)
+    print(shooting(hopf_bifurcation_normal, initial_guess, *( 0.02020202 ,-1.  ) ,method = 'fsolve', plot=True))
+    print(shooting(predator_prey, [0.7,0.3,100], *parameter ,method = 'fsolve', plot=True))
 
 
-
-
-
-
-
-'''f1 = lambda x, y : x * (1 - x) - (1 * x * y) / (0.1 + x)
-fder = lambda x, y : 0.5 * y*(1 - y / x)
-rng = np.random.default_rng()
-x = rng.standard_normal(100)
-y= np.arange(-50, 50)
-print(optimize.newton(f1,x , fprime=fder, args=(y, ) , maxiter=200))'''
-solution,t = solve_ode( predator_prey,[1,1] , 0 , 200 , 0.001 , 'rk4'  ,1, 0.15,0.1, n=2000,plot= 'plot_x_y')
-print(solution)
-#plt.plot(solution[:,0], solution[:,1])
-#plt.ylabel('y')
-#plt.xlabel('x')
-#plt.show()
-#u0=[10,10]
-#solve(u0,[1,0.4,0.1])
-#print(predator_prey([0.27015621 ,0.27015621] ,1 ,1, 0.4,0.1))
-#find dxdt=0= change of x over time = 0
-#dxdt = solve_dxdt(solution[:,0])
-#get_dxdt_0(solution,dxdt)
-#get_phase_condition(predator_prey, [1,1] , 500 , 0, 1e-10, 1, 0.15,0.1, n=1000)
+if __name__ == "__main__":
+    main()
