@@ -2,9 +2,9 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 from arbitary_differential_equation import *
-from numerical_shooting_final import shooting
+from numerial_shooting import shooting
 from scipy.optimize import fsolve ,root
-from solve_ode_finial import solve_ode
+from solve_ode import solve_ode
 
 def continuation(funs , x0, pars, vary_par_index, vary_par_range, vary_par_number, discretisation, solver=fsolve ,method = 'natural' , plot = True):
     """
