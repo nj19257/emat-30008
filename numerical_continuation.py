@@ -2,7 +2,7 @@ import numpy as np
 import scipy
 import matplotlib.pyplot as plt
 from arbitary_differential_equation import *
-from numerical_shooting_final import shooting
+from numerical_shooting import shooting
 from scipy.optimize import fsolve ,root
 from solve_ode_finial import solve_ode
 
@@ -205,12 +205,12 @@ def cubic(x, *args):
 
 #print(pseudo_arclength_function(hopf_bifurcation_normal ,[1.4, 0, 6.3], get_parameters_list([2, -1] ,0,[2 , -1],40)[1] ,shooting))
 #[ 1.41421356e+00 -7.80704240e-11  2.51327412e+01] hopf normal
-#continuation(cubic, np.array([1]), [2], 0, [-2, 2], 200,
-#                                       discretisation=lambda x: x, solver=fsolve ,method = 'pseudo-arclength')
+continuation(cubic, np.array([1,1]), [2], 0, [-2, 2], 200,
+                                       discretisation=lambda x: x, solver=fsolve ,method = 'pseudo-arclength')
 #pseudo-arclength
 
-continuation(hopf_bifurcation_normal, [1.4, 0, 6.3], [2,-1], 0, [2, 0], 50,
-                                       discretisation=shooting , solver=fsolve ,method = 'natural')
+#continuation(hopf_bifurcation_normal, [1.4, 0, 6.3], [2,-1], 0, [2, 0], 50,
+#                                       discretisation=shooting , solver=fsolve ,method = 'natural')
 
 g = shootingG(hopf_bifurcation_normal)
 root = fsolve(g, [1.4, 0, 6.3], (2,-1))
