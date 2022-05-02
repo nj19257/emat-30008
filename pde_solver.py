@@ -7,10 +7,22 @@ from scipy.optimize import fsolve
 import sys
 
 def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_condition_func ,l_conditional_value = 0,r_conditional_value = 0 ):
-# the boundary condition need to be provided
-# ms: the number of gridpoints the space
-    # mx; The mesh point in space
-# initial_condition_func : func to get the initial condition#
+    """
+    The function solving pde using finite difference method
+        Parameter:
+            mx : The number of grid points in space
+            mt : The number of grid points the time
+            L : Length to solve over
+            T : Time to solve over
+            k : PDE k value
+            method : Solving scheme to use - ’forward’ for forward Euler, ’backward’ for backwards Euler, or ’crank’ for Crank-Nicholson .
+            boundary_condition : Boundary condition type - ’dirichlet’ for Dirichlet boundary conditions, ’neumann’ for Neumann boundary conditions, or ’periodic’ for periodic boundary conditions.
+            initial_condition_func : Initial condition function to apply
+            l_conditional_value : value for left boundary condition(default 0)
+            r_conditional_value : value for right boundary condition(default 0)
+
+    :return: x, u_j
+    """
     old_mx = mx
     old_mt = mt
     mx =int(mx)
@@ -118,14 +130,10 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
     u_j[0] = l_conditional_value
     u_j[-1] = r_conditional_value
     for j in range(0, mt):
-        # Forward Euler timestep at inner mesh points
-        # PDE discretised at position x[i], time t[j]
-        # Boundary conditions
         u_j = solve_pde_step(u_j, matrix_A, matrix_B, method, boundary_condition)
         if np.isnan(u_j).any() == True:
             raise ValueError('The input values have result in fail converge')
 
-    #print(u_j)
     return x , u_j
 def tridiagonal_matrix(n,diagonal,upper_diagonal,lower_diagonal ):
     tridiagonal_matrix =np.eye(n, n, k=-1)*lower_diagonal + \
@@ -146,11 +154,7 @@ def u_exact(x,t ,kappa , L):
 
 def pde_solve(f, u, *args):
     return f(u, *args)
-kappa = 1.0   # diffusion constant
-L=2.0         # length of spatial domain
-T=0.5         # total time to solve for
-mx = 50     # number of gridpoints in space
-mt = 1000   # number of gridpoints in time
+
 
 def pde_function(x,*args):
     print(args)
@@ -167,22 +171,32 @@ def pde_function(x,*args):
 
 def main():
     # Solve for each method
-    c_x, c_u = finite_difference_method(mx, mt, L, T, kappa, "backward",'neumann', u_I )
-
+    kappa = 1.0  # diffusion constant
+    L = 2.0  # length of spatial domain
+    T = 0.5  # total time to solve for
+    mx = 50  # number of gridpoints in space
+    mt = 1000  # number of gridpoints in time
+    #all using neumann condition
+    #other boundary condtion are checked and worked fine
+    x_f, u_f = finite_difference_method(mx, mt, L, T, kappa, "forward", 'neumann', u_I)
+    x_b, u_b = finite_difference_method(mx, mt, L, T, kappa, "backward",'neumann', u_I )
+    x_c, u_c = finite_difference_method(mx, mt, L, T, kappa, "crank", 'neumann', u_I)
     """
     plotting exact solution
     """
-    #xx = np.linspace(0, L, 250)
-    #exact = u_exact(xx, T, kappa, L)
-    #plt.plot(xx, exact, label='exact')
+    xx = np.linspace(0, L, 250)
+    exact = u_exact(xx, T, kappa, L)
+    plt.plot(xx, exact, label='exact')
+    plt.plot(x_f, u_f, label='forward')
+    plt.plot(x_b, u_b, label='backward')
+    plt.plot(x_c, u_c, label='crank')
 
-    #plt.plot(c_x, c_u, label='crank')
-
-    #plt.legend()
-    #plt.xlabel('x')
-    #plt.ylabel('u(x,0.5)')
-    #plt.show()
+    plt.legend()
+    plt.xlabel('x')
+    plt.ylabel('u(x,0.5)')
+    plt.show()
     x = np.linspace(0, L, mx + 1)
+    #Adapting numerical method with a changing kappa
     numerical_continuation(pde_function, np.ones(mx + 1), [50 ,1000 , 2.0 , 0.5 ,1.0 ], 4, [0.5, 20], 30,
                                            discretisation=lambda x: x, solver=pde_solve ,method = 'natural',plot=True)
 

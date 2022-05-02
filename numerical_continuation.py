@@ -19,13 +19,13 @@ def numerical_continuation(funs , x0, pars, vary_par_index, vary_par_range, vary
     :param vary_par_number: Number of equally spaced values to split the range into
     :param discretisation: Discretisation to be applied to function. Use shooting for shooting problems
     :param solver: Solver to use for root finding. fsolve is suggested as it has the best performance
-    :param method: Numerical continuation method to use. 'natural' for natural parameter continuation and 'pseudo' for
+    :param method: Numerical continuation method to use. 'natural' for natural parameter continuation and 'pseudo'
+    :param plot: The statement of plot figure or not
     pseudo-arclength continuation.
 
 
 
-
-    :return: Returns par_list, x where par_list is a list of parameters and x is a list of the respective discretised
+     :return: Returns par_list, x where par_list is a list of parameters and x is a list of the respective discretised
     function solutions.
     """
 
@@ -85,7 +85,7 @@ def numerical_continuation(funs , x0, pars, vary_par_index, vary_par_range, vary
             return par_1
         if discretisation == shooting:
             solve = lambda v1: np.append(
-                g(v1[:-1], *get_par(v1[-1])),
+                g(v1[:-1], *get_par(v1[-1])), #np.round added if error arise this might be problem
                 PAeq(v1)
             )
         else:
@@ -100,6 +100,7 @@ def numerical_continuation(funs , x0, pars, vary_par_index, vary_par_range, vary
             v_0 = v_1
             par_0 = par_1
             predicted_v1 = v_1+ secant
+            predicted_v1[:-1] = np.round(predicted_v1[:-1],2) #this might be the problem
             v_1 = solver(solve, predicted_v1)
             solutions.append(v_1[:-1])
             pars_list.append(v_1[-1])
@@ -167,18 +168,25 @@ def cubic(x, *args):
     return x ** 3 - x + c
 
 def main():
-
+    #tested all three equation and work with no problems
     #print(pseudo_arclength_function(hopf_bifurcation_normal ,[1.4, 0, 6.3], get_parameters_list([2, -1] ,0,[2 , -1],40)[1] ,shooting))
     #[ 1.41421356e+00 -7.80704240e-11  2.51327412e+01] hopf normal
+    #Using cubic equation
     numerical_continuation(cubic, np.array([1,1]), [2], 0, [-2, 2], 200,
-                                           discretisation=lambda x: x, solver=fsolve ,method = 'natural')
-    #pseudo-arclength
-
-    #numerical_continuation(hopf_bifurcation_normal, [1.4, 0, 6.3], [2,-1], 0, [2, 0], 50,
-    #                                       discretisation=shooting , solver=fsolve ,method = 'pseudo-arclength')
-
-    g = shootingG(hopf_bifurcation_normal)
-    root = fsolve(g, [1.4, 0, 6.3], (2,-1))
-    print(root)
+                                          discretisation=lambda x: x, solver=fsolve ,method = 'natural' , plot=True)
+    numerical_continuation(cubic, np.array([1,1]), [2], 0, [-2, 2], 200,
+                                           discretisation=lambda x: x, solver=fsolve ,method = 'pseudo-arclength', plot=True)
+    #Using Hopf bifurcation nor form equation
+    numerical_continuation(hopf_bifurcation_normal, [1.4, 0, 6.3], [2, -1], 0, [2, 0], 50,
+                                           discretisation=shooting , solver=fsolve ,method = 'natural', plot=True)
+    numerical_continuation(hopf_bifurcation_normal, [1.4, 0, 6.3], [2, -1], 0, [2, 0], 50,
+                                           discretisation=shooting , solver=fsolve ,method = 'pseudo-arclength', plot=True)
+    numerical_continuation(hopf_bifurcation_normal, [1.4, 0, 6.3], [2,-1], 0, [2, 0], 50,
+                                           discretisation=shooting , solver=fsolve ,method = 'pseudo-arclength')
+    #Using modified_hopf_bifurcation_normal
+    numerical_continuation(modified_hopf_bifurcation_normal, [1.4, 0 ,19], [2], 0, [2, -1], 50,
+                                           discretisation=shooting , solver=fsolve ,method = 'natural', plot=True)
+    numerical_continuation(modified_hopf_bifurcation_normal, [1.4, 0, 6.3], [2], 0, [2, -1], 50,
+                                           discretisation=shooting , solver=fsolve ,method = 'pseudo-arclength', plot=True)
 if __name__ == "__main__":
     main()

@@ -9,7 +9,7 @@ def euler_step(f, x, t, h,*args): #work
     """
      single Euler step function
         Parameter:
-            f(function) = function used ( need to define more detail)
+            f(function) : function used ( need to define more detail)
             x_current : the current value of x
             t_current : the current timestep
             h : interval between step (step size) (assumed to be constant for the sake of simplicity) is then given by t_{n+1} = h + t_n
@@ -27,7 +27,7 @@ def RK4_step(f, x, t, h,*args): #work
     """
      single 4th-order Runge-Kutta step function
         Parameter:
-            f(function) = function used ( need to define more detail)
+            f(function) : function used ( need to define more detail)
             x_current : the current value of x
             t_current : the current timestep
             h : interval between step (step size) (assumed to be constant for the sake of simplicity) is then given by t_{n+1} = h + t_n
@@ -49,7 +49,7 @@ def solve_to( f ,x , t , t1 , deltat_max , Method,*args): # work
     """
      Function which solves from x_n , t_n to x_{n+1} , t_{n+1} in steps no bigger than deltat_max
         Parameter:
-            f(function) = function used ( need to define more detail)
+            f(function) : function used ( need to define more detail)
             x_current(x) : the current value of x
             t_current(t) : the current timestep
             t1 : the value of next timestep based on the current timestep
@@ -77,7 +77,7 @@ def solve_ode( f , x ,  t_end ,  Method  , *args, deltat_max =1e-3 ,n=5 ,t_0=0 ,
     The function that use solve_to by a first-order numerical procedure for ODE (such as forward euler and 4th-order Runge-Kutta method)
     to generate a series of numerical solution estimates x1,x2,x3,...
         Parameter:
-            f(function) = function used ( need to define more detail)
+            f(function) : function used ( need to define more detail)
             x_current : the current value of x
             t_0 : the initial timestep (default start time is 0 )
             t_end : the target timestep
@@ -128,7 +128,7 @@ def error_depend_deltat_t( f ,x  , t_end ,h, Method , *args , plot=False , timer
     """
     Function that find out the error depending on a range of delta t
         Parameter:
-            f(function) = function used ( need to define more detail)
+            f(function) : function used ( need to define more detail)
             x_current : the current value of x
             t_end : the target timestep
             h : The list of values for maximum timesteps allowed for testing
@@ -204,14 +204,13 @@ def same_error(list_error_1,list_error_2 , h , tol=1e-5):
     return output
 
 
-"""
-This section is used to answer Q3
-"""
+
 def main():
     list_h=np.logspace(-1 , -6 , 100 ) #Therefore, h will be always smaller than the default timestep
     list_error_rk4 = error_depend_deltat_t(dxdt_equal_x,1 ,1 ,list_h , 'rk4', plot=True , timer = True)
     list_error_euler = error_depend_deltat_t(dxdt_equal_x,1  ,1 ,list_h ,  'euler', plot=True , timer = True)
     plt.show()
+    #The values of h which have the same error in both method
     print(same_error(list_error_rk4,list_error_euler , list_h))
     n = 500
     euler_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1]  ,1000 ,   'euler' , n=n , timer=True)
