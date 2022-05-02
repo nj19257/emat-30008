@@ -69,3 +69,8 @@ def modified_hopf_bifurcation_normal(u,t,beta):
     du1dt = beta*u[0] - u[1] + u[0]*(u[0]**2+u[1]**2) - u[0]*(u[0]**2+u[1]**2)**2
     du2dt = u[0] + beta*u[1] + u[1]*(u[0]**2+u[1]**2) - u[1]*(u[0]**2+u[1]**2)**2
     return np.array([du1dt , du2dt])
+
+def cubic(x, *args):
+    #print(args)
+    c = args[0]
+    return x ** 3 - x + c

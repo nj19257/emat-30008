@@ -2,12 +2,21 @@ import numpy as np
 from math import pi
 import scipy.sparse.linalg
 import matplotlib.pyplot as plt
+from numerical_continuation import numerical_continuation
+from scipy.optimize import fsolve
+import sys
 
 def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_condition_func ,l_conditional_value = 0,r_conditional_value = 0 ):
 # the boundary condition need to be provided
 # ms: the number of gridpoints the space
-# mx; The mesh point in space
-# initial_condition_func : func to get the initial condition
+    # mx; The mesh point in space
+# initial_condition_func : func to get the initial condition#
+    old_mx = mx
+    old_mt = mt
+    mx =int(mx)
+    mt= int(mt)
+    if mt != old_mt or mx != old_mx:
+        raise ValueError('mx or mt is not a integar')
     if boundary_condition == 'dirichlet':
     #no need change for this type
     #(n-1)(n-1) matrix
@@ -31,7 +40,7 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
     vec = np.zeros(matrix_size)
     # Set initial condition
     for i in range(0, mx+1):
-        u_j[i] = initial_condition_func(x[i])
+        u_j[i] = initial_condition_func(x[i],t[i],L)
 
     if method == 'forward':
         matrix_A = np.identity(matrix_size)
@@ -39,7 +48,7 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
     elif method == 'backward':
         matrix_A = tridiagonal_matrix(matrix_size,1 + 2*lamda ,-lamda , -lamda)
         matrix_B = np.identity(matrix_size)
-    elif method == 'cranker':
+    elif method == 'crank':
         matrix_A = tridiagonal_matrix(matrix_size, 1 + lamda,-lamda/2 , -lamda/2 )
         matrix_B = tridiagonal_matrix(matrix_size, 1 - lamda, lamda/2, lamda / 2)
 
@@ -62,7 +71,6 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
         matrix_A[-1, -2] = 2 * matrix_A[-1, -2]
         matrix_B[0, 1] = 2 * matrix_B[0, 1]
         matrix_B[-1, -2] = 2 * matrix_B[-1, -2]
-        print(matrix_B)
         #new_u_j = u_j
     def get_u_j(u_j ,boundary_condition):
         if boundary_condition == 'dirichlet':
@@ -114,8 +122,10 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
         # PDE discretised at position x[i], time t[j]
         # Boundary conditions
         u_j = solve_pde_step(u_j, matrix_A, matrix_B, method, boundary_condition)
+        if np.isnan(u_j).any() == True:
+            raise ValueError('The input values have result in fail converge')
 
-    print(u_j)
+    #print(u_j)
     return x , u_j
 def tridiagonal_matrix(n,diagonal,upper_diagonal,lower_diagonal ):
     tridiagonal_matrix =np.eye(n, n, k=-1)*lower_diagonal + \
@@ -123,7 +133,7 @@ def tridiagonal_matrix(n,diagonal,upper_diagonal,lower_diagonal ):
     return tridiagonal_matrix
 
 
-def u_I(x):
+def u_I(x,t,L):
     # initial temperature distribution
     y = np.sin(pi*x/L)
     return y
@@ -132,25 +142,49 @@ def u_exact(x,t ,kappa , L):
     # the exact solution
     y = np.exp(-kappa*(pi**2/L**2)*t)*np.sin(pi*x/L)
     return y
+
+
+def pde_solve(f, u, *args):
+    return f(u, *args)
 kappa = 1.0   # diffusion constant
 L=2.0         # length of spatial domain
 T=0.5         # total time to solve for
 mx = 50     # number of gridpoints in space
 mt = 1000   # number of gridpoints in time
 
-# Solve for each method
-c_x, c_u = finite_difference_method(mx, mt, L, T, kappa, "backward",'neumann', u_I )
+def pde_function(x,*args):
+    print(args)
+    args = args[0]
+    mx = args[0]
+    mt = args[1]
+    L = args[2]
+    T = args[3]
+    kappa = args[4]
 
-"""
-plotting exact solution
-"""
-xx = np.linspace(0, L, 250)
-exact = u_exact(xx, T, kappa, L)
-plt.plot(xx, exact, label='exact')
+    x ,u_j = finite_difference_method(mx, mt, L, T, kappa, "backward", 'neumann', u_I )
+    #print(u_j)
+    return u_j
 
-plt.plot(c_x, c_u, label='crank')
+def main():
+    # Solve for each method
+    c_x, c_u = finite_difference_method(mx, mt, L, T, kappa, "backward",'neumann', u_I )
 
-plt.legend()
-plt.xlabel('x')
-plt.ylabel('u(x,0.5)')
-plt.show()
+    """
+    plotting exact solution
+    """
+    #xx = np.linspace(0, L, 250)
+    #exact = u_exact(xx, T, kappa, L)
+    #plt.plot(xx, exact, label='exact')
+
+    #plt.plot(c_x, c_u, label='crank')
+
+    #plt.legend()
+    #plt.xlabel('x')
+    #plt.ylabel('u(x,0.5)')
+    #plt.show()
+    x = np.linspace(0, L, mx + 1)
+    numerical_continuation(pde_function, np.ones(mx + 1), [50 ,1000 , 2.0 , 0.5 ,1.0 ], 4, [0.5, 20], 30,
+                                           discretisation=lambda x: x, solver=pde_solve ,method = 'natural',plot=True)
+
+if __name__ == "__main__":
+    main()

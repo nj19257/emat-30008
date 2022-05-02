@@ -1,6 +1,5 @@
 import numpy as np
-from scipy import optimize
-from solve_ode_finial import solve_ode
+from solve_ode import solve_ode
 from scipy.optimize import fsolve
 from arbitary_differential_equation import *
 from root_finding import newton
@@ -13,9 +12,9 @@ def single_preiodic_orbit(t):
     print(output)
     return  output
 
-def initial_guesss(f, x0 , target_time ,*args):
+def initial_guesss(ode, x0 , target_time ,*args):
     n = target_time*20
-    solution, t = solve_ode(f, x0, target_time, 'rk4', *args , n=n)
+    solution, t = solve_ode(ode, x0, target_time, 'rk4', *args , n=n)
     try:
         #get most repeated x values
         output, i = get_most_repeated_value_index(solution[:,0])
@@ -35,12 +34,12 @@ def get_most_repeated_value_index(input,dp=5):
     #print(counts)
     output = unique[np.where(counts == np.max(counts))]
     #print(output)
-    index=np.where(1122222222222222222222222222222200000000000000000000000000000 == output)
+    index=np.where(input == output)
     #print(index)
     return output,np.array(index)
 
 
-def shooting(ode, u0,*args , method='fsolve' ,plot=False):
+def shooting(ode, u0,*args , method='fsolve' ,phase_condition = lambda u0,ode, *args: ode(u0[:-1], 1, *args)[0] ,plot=False):
     """
     A function that uses numerical shooting to find limit cycles of
     a specified ODE.
@@ -66,7 +65,8 @@ def shooting(ode, u0,*args , method='fsolve' ,plot=False):
 
     g = lambda u0, *args: np.array([
         *(u0[:-1] - solve_ode(ode, u0[:-1],  u0[-1],  'rk4', *args)[0][-1]),
-        ode(u0[:-1], 1, *args)[0] ,  # dx/dt(0) = 0
+        phase_condition(u0,ode ,*args)
+        #ode(u0[:-1], 1, *args)[0] ,  # dx/dt(0) = 0
     ])
     warnings.simplefilter("error")
     try :
@@ -75,21 +75,17 @@ def shooting(ode, u0,*args , method='fsolve' ,plot=False):
         elif method == 'newton':
             root = newton(g,u0,*args)
         else:
-            print('not valid input for method')
             root = np.array([])
+            raise NameError('not valid input for method')
         if plot == True:
-            print(root[:-1])
-            print(root[-1])
             solution, t = solve_ode(ode, root[:-1], root[-1], 'rk4', *args ,n=1000)
-            print(solution)
             plt.plot(root[0], root[1], 'go', label="Manually found orbit" )
             plt.plot(solution[:, 0], solution[:, 1])
             plt.ylabel('y')
             plt.xlabel('x')
             plt.legend()
             plt.show()
-    except ValueError:
-            print('test')
+    except Warning:
             root = np.array([])
 
     return root
@@ -130,13 +126,13 @@ def main():
     d = 0.1
     parameter = (a, 0.15, d)
     #shooting(hopf_bifurcation_normal, [0.01, 0.01, 3, 4], *(2, -1))
-    solution, t = solve_ode(hopf_bifurcation_normal, [1, 1], 100, 'rk4', 2,-1, n=1000, plot='plot_x_y')
+    #solution, t = solve_ode(hopf_bifurcation_normal, [1, 1], 100, 'rk4', 2,-1, n=1000, plot='plot_x_y')
     initial_guess = initial_guesss(hopf_bifurcation_normal1 , [1.4, 0] ,1500,  2      )
     # initial_guess =np.append(result1,25.05)
     print(initial_guess)
     print(initial_guess)
     print(shooting(hopf_bifurcation_normal, initial_guess, *( 0.02020202 ,-1.  ) ,method = 'fsolve', plot=True))
-    print(shooting(predator_prey, [0.7,0.3,100], *parameter ,method = 'fsolve', plot=True))
+    print(shooting(predator_prey, [0.7,0.3,25], *parameter ,method = 'fsolve', plot=True))
 
 
 if __name__ == "__main__":

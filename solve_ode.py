@@ -214,8 +214,8 @@ def main():
     plt.show()
     print(same_error(list_error_rk4,list_error_euler , list_h))
     n = 500
-    euler_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1]  ,100 ,   'euler' , n=n , timer=True)
-    rk4_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1]  ,100 ,   'rk4' , n=n  ,timer=True )
+    euler_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1]  ,1000 ,   'euler' , n=n , timer=True)
+    rk4_output,t=solve_ode(d2xdt2_equals_minus_x,[1,1]  ,1000 ,   'rk4' , n=n  ,timer=True )
     true_answer=d2xdt2_equals_minus_x_true(t)
     #plot_xlabel_ylabel('t', x, x , y ,Method)
     plt.subplot(2, 1, 1)

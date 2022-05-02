@@ -1,8 +1,8 @@
 import math
 import unittest
 import numpy as np
-from solve_ode_finial import solve_ode
-from numerical_shooting_final import shooting
+from solve_ode import solve_ode
+from numerical_shooting import shooting
 from arbitary_differential_equation import *
 
 
@@ -24,13 +24,12 @@ class test_shooting(unittest.TestCase):
             print('shooting function able to return a empty array when the numerical root finder failed: test failed')
 
     def test_wrong_input_method(self):
-        result = shooting(predator_prey, [0.06861238 , 0.15582958,25.05], *(1, 0.15, 0.1), method='1234')
-        true_result = np.array([])
-        if true_result.size == result.size :
+        try:
+            result = shooting(predator_prey, [0.06861238, 0.15582958, 25.05], *(1, 0.15, 0.1), method='1234')
+            print('shooting function able to return a empty array when the input method is not valid: test failed')
+        except NameError:
             print('shooting function able to return a empty array when the input method is not valid: test passed')
 
-        else:
-            print('shooting function able to return a empty array when the input method is not valid: test failed')
 
     def test_undefine_ODE_input(self):
         try:
@@ -44,9 +43,9 @@ class test_shooting(unittest.TestCase):
         true_result = shooting(predator_prey, [0.06861238, 0.15582958, 25.05], *(1, 0.15, 0.1), method='fsolve')
         error = abs(newton - true_result)
         if np.all(error < 1e-8) == True:
-            print('Newton method in shooting function is resulting in reliable value : test passed')
+            print('Newton root-finding method in shooting function is resulting in reliable value : test passed')
         else:
-            print('Newton method in shooting function is resulting in unreliable value : test failed')
+            print('Newton root-finding method in shooting function is resulting in unreliable value : test failed')
 
 if __name__ == "__main__":
     unittest.main()
