@@ -148,7 +148,6 @@ def pde_function(x,*args):
     L = args[2]
     T = args[3]
     kappa = args[4]
-
     x ,u_j = finite_difference_method(mx, mt, L, T, kappa, "backward", 'neumann', u_I )
     return u_j
 
