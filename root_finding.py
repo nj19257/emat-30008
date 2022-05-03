@@ -16,7 +16,6 @@ def jacobian_matrix(f, x, tol=1e-8, *args):
     jacobian_matrix = np.zeros((n, n))
     for i in range(n):
         Dxj = (abs(x[i]) * tol) if x[i] != 0 else tol
-        #print(Dxj)
         x_new = [(xi if k != i else xi + Dxj) for k, xi in enumerate(x)]
         jacobian_matrix[:, i] = (f(x_new, *args) - function) / Dxj
     return jacobian_matrix

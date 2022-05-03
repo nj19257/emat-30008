@@ -194,8 +194,6 @@ def same_error(list_error_1,list_error_2 , h , tol=1e-5):
     error_min_i = np.where(error == np.amin(error))
     #error_stat = (error < tol)
     output = None
-
-    print(error_min_i)
     if error[error_min_i] < tol :  #At least one value smaller than tol
         index = np.where(error < tol)
         output=h[index]
@@ -245,6 +243,7 @@ def main():
     plt.xlabel('y (dx/dt)')
     plt.ylabel('x')
     plt.show()
+    #These plot have indicate that forward euler are not as accurate as RK4 method
 
 if __name__ == "__main__":
     main()

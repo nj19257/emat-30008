@@ -9,7 +9,6 @@ import warnings
 
 def single_preiodic_orbit(t):
     output, i=get_most_repeated_value_index(np.diff(t))
-    print(output)
     return  output
 
 def initial_guesss(ode, x0 , target_time ,*args):
@@ -43,8 +42,6 @@ def initial_guesss(ode, x0 , target_time ,*args):
         print('The values of input is not enough to find a good initial guess , try to input a larger target time')
         sys.exit([])
     values_guess = np.append( solution[np.random.choice(i[0])] , cycle_time)
-    print(solution[np.random.choice(i[0])])
-    print(values_guess)
     return values_guess
 
 def get_most_repeated_value_index(input,dp=5):
@@ -86,8 +83,8 @@ def shooting(ode, u0,*args , method='fsolve' ,phase_condition = lambda u0,ode, *
 
     g = lambda u0, *args: np.array([
         *(u0[:-1] - solve_ode(ode, u0[:-1],  u0[-1],  'rk4', *args)[0][-1]),
-        phase_condition(u0,ode ,*args)
-        #ode(u0[:-1], 1, *args)[0] ,  # dx/dt(0) = 0
+        phase_condition(u0,ode ,*args),
+         # dx/dt(0) = 0
     ])
     warnings.simplefilter("error")
     try :
@@ -155,7 +152,8 @@ def main():
     initial_guess = initial_guesss(predator_prey , [1, 1] ,1500, *parameter  )
     #After getting a good initial starting condtion
     #Use the result to input in the shooting function
-    print(shooting(predator_prey, [0.7,0.3,25], *parameter ,method = 'fsolve', plot=True))
+    #As fsolve is always correct, it will be better to test whether the newton function is working
+    print(shooting(predator_prey, initial_guess, *parameter ,method = 'newton', plot=True))
 
 
 if __name__ == "__main__":

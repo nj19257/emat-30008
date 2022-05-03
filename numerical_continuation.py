@@ -122,18 +122,13 @@ def numerical_continuation(funs , x0, pars, vary_par_index, vary_par_range, vary
         solution, vary_par_list = pseudo_arclength_function(funs, x0, pars_list, vary_par_index, solution_solver, discretisation)
         label = 'pseudo-arclength continuation'
 
-    #solution, test = pseudo_arclength_function(ode ,x0,pars_list,vary_par_index, solution_solver ,discretisation )
-    #solution = nature_contunuation_function(ode ,x0,pars_list, solution_solver  )
-
     if plot ==True :
         #this mean that it is a ode and the solution will be included will a timecycle
         if discretisation == shooting:
             norm_x = scipy.linalg.norm(solution[:, :-1], axis=1, keepdims=True)
         else:
             norm_x = scipy.linalg.norm(solution, axis=1, keepdims=True)
-        #norm_x_ps = scipy.linalg.norm(x_ps[:, :-1], axis=1, keepdims=True)
         plt.plot(vary_par_list, norm_x, label=label)
-        #plt.plot(par_list_ps, norm_x_ps[:, 0], label='Pseudo-arclength')
         plt.xlabel('c')
         plt.ylabel('||x||')
         plt.legend()

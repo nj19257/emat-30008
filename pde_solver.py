@@ -74,25 +74,12 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
         matrix_A[-1, 0] = matrix_A[0,1]
         matrix_B[0, -1] = matrix_B[0, 1]
         matrix_B[-1, 0] = matrix_B[0, 1]
-        #new_u_j = u_j[:-2] #not sure]
-        #new_u_j = np.append(new_u_j, new_u_j[-1])
-
-        #u_j remain the same
     elif boundary_condition == 'neumann':
         matrix_A[0,1] = 2*matrix_A[0,1]
         matrix_A[-1, -2] = 2 * matrix_A[-1, -2]
         matrix_B[0, 1] = 2 * matrix_B[0, 1]
         matrix_B[-1, -2] = 2 * matrix_B[-1, -2]
-        #new_u_j = u_j
-    def get_u_j(u_j ,boundary_condition):
-        if boundary_condition == 'dirichlet':
-            new_u_j = u_j[1:-1]
-        elif boundary_condition == 'periodic':
-            new_u_j = u_j[:-2]  # not sure]
-            new_u_j = np.append(new_u_j, new_u_j[-1])
-        elif boundary_condition == 'neumann':
-            new_u_j = u_j
-        return new_u_j
+
     def solve_pde_step(u_j,matrix_A,matrix_B,method,boundary_condition):
 
 
@@ -127,8 +114,6 @@ def finite_difference_method(mx,mt,L,T,k,method ,boundary_condition , initial_co
 
 
 
-    u_j[0] = l_conditional_value
-    u_j[-1] = r_conditional_value
     for j in range(0, mt):
         u_j = solve_pde_step(u_j, matrix_A, matrix_B, method, boundary_condition)
         if np.isnan(u_j).any() == True:
@@ -157,7 +142,6 @@ def pde_solve(f, u, *args):
 
 
 def pde_function(x,*args):
-    print(args)
     args = args[0]
     mx = args[0]
     mt = args[1]
@@ -166,7 +150,6 @@ def pde_function(x,*args):
     kappa = args[4]
 
     x ,u_j = finite_difference_method(mx, mt, L, T, kappa, "backward", 'neumann', u_I )
-    #print(u_j)
     return u_j
 
 def main():
